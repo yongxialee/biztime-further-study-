@@ -27,12 +27,16 @@ router.get('/:code', async (req,res,next) =>{
         let code = req.params.code;
     
         const compResult = await db.query(
-              `SELECT code, name, description
-               FROM companies
+              `SELECT companies.code, companies.name, companies.description, i.industry
+               FROM companies LEFT JOIN industries_companies AS ic
+               ON companies.code=ic.comp_code 
+               LEFT JOIN industries AS i
+               ON ic.in_code = i.in_code
                WHERE code = $1`,
             [code]
-        );
-    
+
+         );
+        
         const invResult = await db.query(
               `SELECT id
                FROM invoices
@@ -43,10 +47,12 @@ router.get('/:code', async (req,res,next) =>{
         if (compResult.rows.length === 0) {
           throw new ExpressError(`Can't find that: ${code}`, 404)
         }
-    
+        console.log(compResult)
         const company = compResult.rows[0];
         const invoices = invResult.rows;
-    
+        
+        company.industries = compResult.rows.map(r=>r.industry)
+      
         company.invoices = invoices.map(inv => inv.id);
     
         return res.json({"company": company});

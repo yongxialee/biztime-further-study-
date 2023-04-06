@@ -46,5 +46,3 @@ CREATE TABLE industries_companies (
 INSERT INTO industries VALUES ('it','IT');
 INSERT INTO industries_companies VALUES ('it','apple');
 
--- INSERT INTO industries_companies VALUES 
--- ('it','apple');

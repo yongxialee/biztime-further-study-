@@ -5,47 +5,41 @@ const router = new express.Router();
 const db = require("../db");
 
 
-// Get list of companies
+// Get list of industries
 //need help with this route
 router.get('/',async (req,res,next)=>{
     try {
-        const inResults = await db.query(
-              `SELECT *
-               FROM industries AS i RIGHT JOIN industries_companies AS ic 
-               ON i.in_code = ic.in_code RIGHT JOIN companies AS c 
-               ON ic.comp_code=c.code ;
-               `
+        const results = await db.query(
+            `SELECT * FROM industries ORDER BY in_code`
         );
-    //     let {industry}=inResults.rows[0]
-    //     let companies = inResults.rows.map(r=>r.company)
-
     
-    //     return res.json({"industries": result.rows});
+        return res.json({"industries": results.rows});
+    }
 
-        const compResults = await db.query(
-            `SELECT id
-             FROM company`
-             
-      );
-  
-      
-      const {industry} = inResults.rows[0];
-      const companies = inResults.rows.map(r=>r.industry);
-      
-   
-    
-      
-  
-      return res.json({ industry,companies});
-
-
-
-      }
-    
-      catch (err) {
+    catch (err) {
         return next(err);
-      }
+    }
 });
+router.get('/:code', async (req, res, next) => {
+    let code = req.params.code;
+    try {
+      const results = await db.query(`
+        SELECT industries.in_code, industries.industry, industries_companies.comp_code
+        FROM industries
+        LEFT JOIN industries_companies 
+        ON industries.in_code = industries_companies.in_code
+        
+        WHERE industries.in_code = $1`, [code])
+      if (results.rows.length === 0) {
+        throw new ExpressError(`Message not found with id ${code}`, 404)
+      }
+      const { industry } = results.rows[0];
+      const companies_code = results.rows.map(r => r.comp_code);
+      return res.json({ code, industry, companies_code })
+    } catch (e) {
+      return next(e)
+    }
+  })
 
 
 router.post('/',async (req,res,next)=>{
